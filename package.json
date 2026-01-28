@@ -1,0 +1,26 @@
+{
+  "name": "async-task-platform-design",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JayModha100/Async-Task-Platform-Design.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/JayModha100/Async-Task-Platform-Design/issues"
+  },
+  "homepage": "https://github.com/JayModha100/Async-Task-Platform-Design#readme",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "pg": "^8.17.2"
+  }
+}
