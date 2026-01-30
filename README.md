@@ -1,15 +1,15 @@
-##Async Task Processing Platform
+## Async Task Processing Platform
 
-A lightweight async job processing system inspired by Celery / Sidekiq, built to understand core backend fundamentals: background workers, retries, idempotency, and failure handling.
+# A lightweight async job processing system inspired by Celery / Sidekiq, built to understand core backend fundamentals such as background workers, retries, idempotency, and failure handling.
 
 This project intentionally prioritizes correctness and system design over external queues or managed services.
 
-Problem Statement
+## Problem Statement
+### Synchronous APIs should not block on long-running or unreliable tasks (emails, reports, sleeps, third-party calls).
 
-Synchronous APIs should not block on long-running or unreliable tasks (emails, reports, sleeps, third-party calls).
 This system allows clients to submit jobs that are executed asynchronously by background workers.
 
-High-Level Architecture
+## High-Level Architecture
 Client
   ↓
 API Service (Node.js)
@@ -18,20 +18,19 @@ PostgreSQL (jobs table)
   ↑
 Worker Service (Node.js)
 
+- API accepts job requests and persists them
 
-API accepts job requests and persists them
+- PostgreSQL acts as a durable job queue
 
-PostgreSQL acts as a durable job queue
+- Workers poll, lock, execute, and update job state
 
-Workers poll, lock, execute, and update job state
-
-Job Lifecycle
-PENDING → IN_PROGRESS → COMPLETED
+## Job Lifecycle
+ PENDING → IN_PROGRESS → COMPLETED
               ↓
            FAILED → RETRY → DEAD
 
 
-Jobs start in PENDING
+- Jobs start in PENDING
 
 Workers atomically claim jobs using database locks
 
@@ -52,6 +51,8 @@ Crash-safe workers
 Safe concurrent workers
 
 Retry with backoff
+
+This system provides at-least-once delivery; duplicate execution is possible and controlled via idempotency.
 
 Idempotency
 
@@ -86,10 +87,9 @@ Redis / Kafka are intentionally avoided to demonstrate fundamentals using a rela
 Running Locally
 docker-compose up --build
 
-
 Services
 
-API → localhost:3000
+API → http://localhost:3000
 
 PostgreSQL → localhost:5432
 
@@ -134,7 +134,7 @@ Resume Description
 
 Async Task Processing Platform (Node.js, PostgreSQL, Docker)
 
-Designed and implemented an async job processing system with retries, scheduling, and crash recovery
+Designed and implemented an async job processing system with retries, scheduling, and worker crash recovery
 
 Enforced idempotent job submission using database-level constraints
 
