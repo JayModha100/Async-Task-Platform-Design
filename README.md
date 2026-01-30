@@ -22,7 +22,8 @@ PENDING → IN_PROGRESS → COMPLETED
 - Workers poll, lock, execute, and update job state
 
 ## Job Lifecycle
-``` PENDING → IN_PROGRESS → COMPLETED
+```
+PENDING → IN_PROGRESS → COMPLETED
               ↓
            FAILED → RETRY → DEAD
 ```
