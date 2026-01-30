@@ -1,13 +1,13 @@
-# Async-Task-Platform-Design
 Async Task Processing Platform
 
-A lightweight async job processing system inspired by Celery / Sidekiq, built to understand backend fundamentals like background workers, retries, idempotency, and failure handling.
+A lightweight async job processing system inspired by Celery / Sidekiq, built to understand core backend fundamentals: background workers, retries, idempotency, and failure handling.
 
-This project focuses on correctness and system design, not external queues or managed services.
+This project intentionally prioritizes correctness and system design over external queues or managed services.
 
 Problem Statement
 
-Synchronous APIs should not block on long-running or unreliable tasks (emails, reports, sleeps, integrations). This system allows clients to submit jobs that are processed asynchronously by background workers.
+Synchronous APIs should not block on long-running or unreliable tasks (emails, reports, sleeps, third-party calls).
+This system allows clients to submit jobs that are executed asynchronously by background workers.
 
 High-Level Architecture
 Client
@@ -18,9 +18,10 @@ PostgreSQL (jobs table)
   ↑
 Worker Service (Node.js)
 
+
 API accepts job requests and persists them
 
-PostgreSQL acts as the durable job queue
+PostgreSQL acts as a durable job queue
 
 Workers poll, lock, execute, and update job state
 
@@ -29,21 +30,22 @@ PENDING → IN_PROGRESS → COMPLETED
               ↓
            FAILED → RETRY → DEAD
 
+
 Jobs start in PENDING
 
-Workers atomically claim jobs using DB locks
+Workers atomically claim jobs using database locks
 
-On success → COMPLETED
+Successful execution → COMPLETED
 
-On failure → retry with backoff
+Failed execution → retried with backoff
 
-After max retries → DEAD
+Exceeded retry limit → DEAD
 
 Core Guarantees
 
 At-least-once execution
 
-Idempotent job submission (no duplicates)
+Idempotent job submission
 
 Crash-safe workers
 
@@ -59,7 +61,7 @@ Enforced via a unique constraint in PostgreSQL
 
 Duplicate API requests with the same key are safely ignored
 
-Ensures clients can retry requests without creating duplicate work
+Allows clients to retry requests without creating duplicate work
 
 Failure Handling
 
@@ -67,24 +69,25 @@ Worker crashes → job is recovered by another worker
 
 Execution errors → job marked FAILED and retried
 
-Exceeded retry limit → job moved to DEAD
+Max retries exceeded → job moved to DEAD
 
 Failures are treated as first-class scenarios, not edge cases.
 
 Tech Stack
 
-Node.js (API + Worker)
+Node.js — API and Worker services
 
-PostgreSQL (durable queue, locking, state)
+PostgreSQL — durable queue, locking, and state
 
-Docker + Docker Compose (local orchestration)
+Docker + Docker Compose — local orchestration
 
-No Redis / Kafka used intentionally to demonstrate fundamentals.
+Redis / Kafka are intentionally avoided to demonstrate fundamentals using a relational database.
 
 Running Locally
 docker-compose up --build
 
-Services:
+
+Services
 
 API → localhost:3000
 
@@ -94,15 +97,16 @@ Health Check
 GET /health
 → { "status": "ok" }
 
+
 Used for basic service liveness verification.
 
 Design Decisions
 
-PostgreSQL chosen for durability, visibility, and locking
+PostgreSQL chosen for durability, visibility, and row-level locking
 
-DB-level constraints used instead of app-level checks
+Database-level constraints preferred over application-level checks
 
-Minimal abstractions to keep behavior observable
+Minimal abstractions to keep system behavior observable
 
 What This Project Demonstrates
 
