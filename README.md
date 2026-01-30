@@ -1,6 +1,5 @@
 ## Async Task Processing Platform
-
-# A lightweight async job processing system inspired by Celery / Sidekiq, built to understand core backend fundamentals such as background workers, retries, idempotency, and failure handling.
+A lightweight async job processing system inspired by Celery / Sidekiq, built to understand core backend fundamentals such as background workers, retries, idempotency, and failure handling.
 
 This project intentionally prioritizes correctness and system design over external queues or managed services.
 
@@ -32,107 +31,107 @@ Worker Service (Node.js)
 
 - Jobs start in PENDING
 
-Workers atomically claim jobs using database locks
+- Workers atomically claim jobs using database locks
 
-Successful execution → COMPLETED
+- Successful execution → COMPLETED
 
-Failed execution → retried with backoff
+- Failed execution → retried with backoff
 
-Exceeded retry limit → DEAD
+- Exceeded retry limit → DEAD
 
-Core Guarantees
+- Core Guarantees
 
-At-least-once execution
+- At-least-once execution
 
-Idempotent job submission
+- Idempotent job submission
 
-Crash-safe workers
+- Crash-safe workers
 
-Safe concurrent workers
+- Safe concurrent workers
 
-Retry with backoff
+- Retry with backoff
 
 This system provides at-least-once delivery; duplicate execution is possible and controlled via idempotency.
 
-Idempotency
+ Idempotency
+-
+- Jobs can include an idempotency_key.
 
-Jobs can include an idempotency_key.
+- Enforced via a unique constraint in PostgreSQL
 
-Enforced via a unique constraint in PostgreSQL
+- Duplicate API requests with the same key are safely ignored
 
-Duplicate API requests with the same key are safely ignored
+- Allows clients to retry requests without creating duplicate work
 
-Allows clients to retry requests without creating duplicate work
+- Failure Handling
 
-Failure Handling
+- Worker crashes → job is recovered by another worker
 
-Worker crashes → job is recovered by another worker
+- Execution errors → job marked FAILED and retried
 
-Execution errors → job marked FAILED and retried
+- Max retries exceeded → job moved to DEAD
 
-Max retries exceeded → job moved to DEAD
+- Failures are treated as first-class scenarios, not edge cases.
 
-Failures are treated as first-class scenarios, not edge cases.
+# Tech Stack
 
-Tech Stack
+- Node.js — API and Worker services
 
-Node.js — API and Worker services
+- PostgreSQL — durable queue, locking, and state
 
-PostgreSQL — durable queue, locking, and state
+- Docker + Docker Compose — local orchestration
 
-Docker + Docker Compose — local orchestration
-
-Redis / Kafka are intentionally avoided to demonstrate fundamentals using a relational database.
+- Redis / Kafka are intentionally avoided to demonstrate fundamentals using a relational database.
 
 Running Locally
 docker-compose up --build
 
-Services
+# Services
 
-API → http://localhost:3000
+- API → http://localhost:3000
 
-PostgreSQL → localhost:5432
+- PostgreSQL → localhost:5432
 
-Health Check
+# Health Check
 GET /health
 → { "status": "ok" }
 
 
-Used for basic service liveness verification.
+## Used for basic service liveness verification.
 
-Design Decisions
+- Design Decisions
 
-PostgreSQL chosen for durability, visibility, and row-level locking
+- PostgreSQL chosen for durability, visibility, and row-level locking
 
-Database-level constraints preferred over application-level checks
+- Database-level constraints preferred over application-level checks
 
-Minimal abstractions to keep system behavior observable
+- Minimal abstractions to keep system behavior observable
 
-What This Project Demonstrates
+## What This Project Demonstrates
 
-Async system design
+- Async system design
 
-Job state modeling
+- Job state modeling
 
-Idempotency via database guarantees
+- Idempotency via database guarantees
 
-Worker crash recovery
+- Worker crash recovery
 
-Backend trade-off reasoning
+- Backend trade-off reasoning
 
-Future Improvements
+- Future Improvements
 
-Dead-letter queue processing
+- Dead-letter queue processing
 
-Job prioritization
+- Job prioritization
 
-Metrics and observability
+- Metrics and observability
 
-API authentication
+- API authentication
 
-Resume Description
+- Resume Description
 
-Async Task Processing Platform (Node.js, PostgreSQL, Docker)
+## Async Task Processing Platform (Node.js, PostgreSQL, Docker)
 
 Designed and implemented an async job processing system with retries, scheduling, and worker crash recovery
 
