@@ -9,13 +9,11 @@ This project intentionally prioritizes correctness and system design over extern
 This system allows clients to submit jobs that are executed asynchronously by background workers.
 
 ## High-Level Architecture
-Client
-  ↓
-API Service (Node.js)
-  ↓
-PostgreSQL (jobs table)
-  ↑
-Worker Service (Node.js)
+```
+PENDING → IN_PROGRESS → COMPLETED
+              ↓
+           FAILED → RETRY → DEAD
+
 
 - API accepts job requests and persists them
 
