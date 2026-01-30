@@ -14,7 +14,7 @@ PENDING → IN_PROGRESS → COMPLETED
               ↓
            FAILED → RETRY → DEAD
 
-
+```
 - API accepts job requests and persists them
 
 - PostgreSQL acts as a durable job queue
@@ -22,10 +22,10 @@ PENDING → IN_PROGRESS → COMPLETED
 - Workers poll, lock, execute, and update job state
 
 ## Job Lifecycle
- PENDING → IN_PROGRESS → COMPLETED
+``` PENDING → IN_PROGRESS → COMPLETED
               ↓
            FAILED → RETRY → DEAD
-
+```
 
 - Jobs start in PENDING
 
