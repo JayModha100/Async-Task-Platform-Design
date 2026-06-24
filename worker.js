@@ -23,7 +23,40 @@ let metrics = {
 async function processJobs() {
   while (true) {
     try {
-      // 🔁 Recover stuck jobs (older than 5 minutes)
+
+      // ===== DEBUG =====
+      try {
+        const debug = await pool.query(`
+          SELECT
+            current_database() AS database_name,
+            current_schema() AS schema_name
+        `);
+
+        console.log("[DB DEBUG]", debug.rows);
+
+        const cols = await pool.query(`
+          SELECT column_name
+          FROM information_schema.columns
+          WHERE table_name = 'jobs'
+          ORDER BY ordinal_position
+        `);
+
+        console.log("[JOBS COLUMNS]", cols.rows);
+
+        const test = await pool.query(`
+          SELECT started_at
+          FROM jobs
+          LIMIT 1
+        `);
+
+        console.log("[STARTED_AT TEST] PASSED");
+
+      } catch (debugErr) {
+        console.error("[DEBUG ERROR]", debugErr);
+      }
+      // ===== END DEBUG =====
+
+      // 🔁 Recover stuck jobs
       await pool.query(`
         UPDATE jobs
         SET status = 'PENDING',
