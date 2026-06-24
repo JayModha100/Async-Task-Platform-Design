@@ -40,8 +40,22 @@ async function initDB() {
         status TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT now(),
         updated_at TIMESTAMP DEFAULT now(),
-        idempotency_key TEXT
-      )
+        idempotency_key TEXT,
+        started_at TIMESTAMP,
+        run_at TIMESTAMP DEFAULT now(),
+        error_message TEXT,
+        failed_at TIMESTAMP,
+        attempt_count INTEGER DEFAULT 0,
+        max_attempts INTEGER DEFAULT 3
+      );
+      
+      -- Safely add columns if the table already existed with the old schema
+      ALTER TABLE jobs ADD COLUMN IF NOT EXISTS started_at TIMESTAMP;
+      ALTER TABLE jobs ADD COLUMN IF NOT EXISTS run_at TIMESTAMP DEFAULT now();
+      ALTER TABLE jobs ADD COLUMN IF NOT EXISTS error_message TEXT;
+      ALTER TABLE jobs ADD COLUMN IF NOT EXISTS failed_at TIMESTAMP;
+      ALTER TABLE jobs ADD COLUMN IF NOT EXISTS attempt_count INTEGER DEFAULT 0;
+      ALTER TABLE jobs ADD COLUMN IF NOT EXISTS max_attempts INTEGER DEFAULT 3;
     `);
 
     // Create unique index for idempotency
