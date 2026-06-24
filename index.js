@@ -4,6 +4,7 @@ const pool = require("./db");
 
 const app = express();
 app.use(express.json());
+app.use(express.static("public"));
 
 // In-memory metrics (minimal)
 let metrics = {

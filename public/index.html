@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Async Task Platform</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .panel {
+            margin-bottom: 30px;
+        }
+        .row {
+            display: flex;
+            gap: 20px;
+        }
+        .col {
+            flex: 1;
+        }
+        input, select, button {
+            padding: 10px;
+            margin: 5px 0 15px 0;
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #0066cc;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #0052a3;
+        }
+        pre {
+            background-color: #282c34;
+            color: #abb2bf;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 14px;
+        }
+        .metric-cards {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 6px;
+            flex: 1;
+            text-align: center;
+        }
+        .card-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0066cc;
+            margin-top: 5px;
+        }
+        #error-msg {
+            color: #dc3545;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Async Task Platform</h1>
+        
+        <div class="panel">
+            <h2>System Metrics</h2>
+            <div class="metric-cards">
+                <div class="card">
+                    <div>Jobs Processed</div>
+                    <div id="metric-processed" class="card-value">0</div>
+                </div>
+                <div class="card">
+                    <div>Jobs Succeeded</div>
+                    <div id="metric-succeeded" class="card-value">0</div>
+                </div>
+                <div class="card">
+                    <div>Jobs Failed</div>
+                    <div id="metric-failed" class="card-value">0</div>
+                </div>
+            </div>
+            <button onclick="fetchMetrics()" style="width: auto;">Refresh Metrics</button>
+        </div>
+
+        <div class="row">
+            <div class="col panel">
+                <h2>Create Job</h2>
+                <form id="create-form" onsubmit="createJob(event)">
+                    <label>Task Type:</label>
+                    <select id="task_type">
+                        <option value="sleep_test">Sleep Test (Simulate Work)</option>
+                        <option value="fail_test">Fail Test (Simulate Error)</option>
+                    </select>
+
+                    <label>Idempotency Key (Optional):</label>
+                    <input type="text" id="idempotency_key" placeholder="e.g. req_12345">
+
+                    <label>Payload (JSON format):</label>
+                    <input type="text" id="payload" value='{"sleep_ms": 3000}'>
+
+                    <button type="submit">Submit Job</button>
+                </form>
+                <div id="create-result"></div>
+            </div>
+
+            <div class="col panel">
+                <h2>Check Job Status</h2>
+                <form id="status-form" onsubmit="checkStatus(event)">
+                    <label>Job ID:</label>
+                    <input type="number" id="job_id" required placeholder="Enter Job ID">
+                    <button type="submit">Check Status</button>
+                </form>
+                <div id="status-result"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchMetrics() {
+            try {
+                const res = await fetch('/metrics');
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('metric-processed').innerText = data.jobs_processed || 0;
+                    document.getElementById('metric-succeeded').innerText = data.jobs_succeeded || 0;
+                    document.getElementById('metric-failed').innerText = data.jobs_failed || 0;
+                }
+            } catch (e) {
+                console.error("Failed to fetch metrics", e);
+            }
+        }
+
+        async function createJob(e) {
+            e.preventDefault();
+            const resultDiv = document.getElementById('create-result');
+            resultDiv.innerHTML = 'Submitting...';
+
+            const task_type = document.getElementById('task_type').value;
+            const idempotency_key = document.getElementById('idempotency_key').value;
+            let payload = {};
+            try {
+                payload = JSON.parse(document.getElementById('payload').value);
+            } catch(err) {
+                resultDiv.innerHTML = '<span id="error-msg">Invalid JSON payload</span>';
+                return;
+            }
+
+            const body = { task_type, payload };
+            if (idempotency_key) body.idempotency_key = idempotency_key;
+
+            try {
+                const res = await fetch('/jobs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                resultDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                // Auto-fill status checker with new job ID
+                if (data.job_id) {
+                    document.getElementById('job_id').value = data.job_id;
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `<span id="error-msg">Error: ${err.message}</span>`;
+            }
+        }
+
+        async function checkStatus(e) {
+            e.preventDefault();
+            const resultDiv = document.getElementById('status-result');
+            const jobId = document.getElementById('job_id').value;
+            resultDiv.innerHTML = 'Fetching...';
+
+            try {
+                const res = await fetch(`/jobs/${jobId}`);
+                const data = await res.json();
+                resultDiv.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (err) {
+                resultDiv.innerHTML = `<span id="error-msg">Error: ${err.message}</span>`;
+            }
+        }
+
+        // Initial fetch
+        fetchMetrics();
+    </script>
+</body>
+</html>
